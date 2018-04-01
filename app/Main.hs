@@ -16,7 +16,7 @@ import System.IO (stdin)
 
 import Format (showTransaction)
 import Hledger (Journal(..), Transaction(..), readJournalFile)
-import Options (Options(..), getOptions)
+import Options (Options(..), Sort(..), getOptions)
 import Debug.Trace
 
 
@@ -40,8 +40,8 @@ journalFile path =
 -- Sort transactions
 sortTx :: Options -> [Transaction] -> [Transaction]
 sortTx opts txs =
-  if sort opts
-     then sortBy dates txs
-     else txs
-  where dates t1 t2 = compare (tdate t1) (tdate t2)
+  maybe txs ((`sortBy` txs) . pick) $ sort opts
+  where
+    pick Date  a b = compare (tdate a) (tdate b)
+    pick Date2 a b = compare (tdate2 a) (tdate2 b)
 

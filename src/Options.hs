@@ -1,5 +1,6 @@
 module Options
   ( Options(..)
+  , Sort(..)
   , getOptions
   ) where
 
@@ -10,11 +11,24 @@ import System.Directory (getCurrentDirectory, getHomeDirectory)
 import System.FilePath((</>), isRelative)
 
 
+data Sort
+  = Date
+  | Date2
+  deriving (Eq, Show)
+
+-- Parse a string for sort type
+parseSort :: ReadM Sort
+parseSort = eitherReader parse
+  where
+    parse "date"  = Right Date
+    parse "date2" = Right Date2
+    parse option  = Left $ "Invalid sort option: " <> option
+
 -- The different command-line options
 data Options = Options
   { file         :: String
   , amountColumn :: Int
-  , sort         :: Bool
+  , sort         :: Maybe Sort
   } deriving (Eq, Show)
 
 -- Get the command-line options for the current program
@@ -70,9 +84,9 @@ amountColumnParser =
     <> help "Align amount at given column" )
 
 -- Parser for sort option
-sortParser :: Parser Bool
+sortParser :: Parser (Maybe Sort)
 sortParser =
-  switch
+  optional $ option parseSort
     (  long "sort"
     <> short 's'
     <> help "Whether to sort transactions by date" )
