@@ -28,7 +28,7 @@ runWithOpts :: Options -> IO ()
 runWithOpts opts = do
   journal <- journalFile $ file opts
   let txs = sortTx opts (jtxns journal)
-      out = showTransaction (amountColumn opts) <$> txs
+      out = showTransaction opts <$> txs
   putStrLn $ unlines out
 
 -- Read a journal file or stdin if the file is '-'

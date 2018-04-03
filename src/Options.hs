@@ -26,9 +26,10 @@ parseSort = eitherReader parse
 
 -- The different command-line options
 data Options = Options
-  { file         :: String
-  , amountColumn :: Int
-  , sort         :: Maybe Sort
+  { file           :: String
+  , amountColumn   :: Int
+  , sort           :: Maybe Sort
+  , showLastAmount :: Bool
   } deriving (Eq, Show)
 
 -- Get the command-line options for the current program
@@ -62,6 +63,7 @@ optionsParser =
     <$> fileParser
     <*> amountColumnParser
     <*> sortParser
+    <*> showLastAmountParser
 
 -- Parser for file option
 fileParser :: Parser String
@@ -90,4 +92,10 @@ sortParser =
     (  long "sort"
     <> short 's'
     <> help "Whether to sort transactions by date" )
+
+showLastAmountParser :: Parser Bool
+showLastAmountParser =
+  flag False True
+    (  long "show-last-amount"
+    <> help "Whether to show the amount for the last posting" )
 

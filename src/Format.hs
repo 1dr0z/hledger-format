@@ -10,17 +10,23 @@ module Format
 import Data.Text (Text)
 import qualified Data.Text as Text
 import Data.String.Conversions (cs)
+import Options (Options(..))
 
 import Hledger hiding (showPosting, showTransaction)
 
 
 -- Format a transaction
-showTransaction :: Int -> Transaction -> String
-showTransaction width tx = unlines $
+showTransaction :: Options -> Transaction -> String
+showTransaction opts tx = unlines $
   [ showDescriptionLine tx ++ samelinecomment ]
   ++ newlinecomments
-  ++ fmap (showPosting width) (tpostings tx)
+  ++ showPostings (tpostings tx)
   where
+    -- Show all postings with special treatment for the last one
+    showPostings []     = []
+    showPostings [p]    = [showPosting opts (showLastAmount opts) p]
+    showPostings (p:ps) = showPosting opts True p : showPostings ps
+
     (samelinecomment, newlinecomments) =
       parseCommentLines (tcomment tx)
 
@@ -72,8 +78,8 @@ parseCommentLines t =
         ls      -> map commentprefix ls
 
 -- Format a single posting
-showPosting :: Int -> Posting -> String
-showPosting width pt = indent 4 $ rstrip $
+showPosting :: Options -> Bool -> Posting -> String
+showPosting opts showAmt pt = indent 4 $ rstrip $
   unlines $
     concat
       [ statusAndAccount
@@ -93,10 +99,13 @@ showPosting width pt = indent 4 $ rstrip $
     account = showAccountName Nothing (ptype pt) (paccount pt)
 
     -- Format the mixed currency amount
-    amount = showMixedAmountOneLine (pamount pt)
+    amount =
+      if showAmt
+         then showMixedAmountOneLine (pamount pt)
+         else ""  -- Hide the amount
 
     -- Ensure at least two spaces between account and amount
-    padding = max (2 + length (status ++ account)) (width - length amount)
+    padding = max (2 + length (status ++ account)) (amountColumn opts - length amount)
     statusAndAccount = fitString (Just padding) Nothing False True $ status ++ account
 
     -- Format balance assertion
